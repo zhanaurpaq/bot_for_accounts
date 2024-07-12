@@ -99,7 +99,7 @@ def send_email(file_path, sender_id):
     part.add_header('Content-Disposition', f'attachment; filename= {os.path.basename(file_path)}')
 
     msg.attach(part)
-    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server = smtplib.SMTP('smtp.mail.ru', 587)
     server.starttls()
     server.login(from_addr, os.getenv('EMAIL_PASSWORD'))
     text = msg.as_string()
