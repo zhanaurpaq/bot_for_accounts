@@ -1,5 +1,7 @@
 import os
+import time
 from telethon import TelegramClient, events, Button
+from telethon.errors.rpcerrorlist import FloodWaitError
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -15,7 +17,10 @@ admin_id = 698359191  # ID гендиректора
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
-client = TelegramClient('bot', api_id, api_hash).start(bot_token=bot_token)
+def create_telegram_client():
+    return TelegramClient('bot', api_id, api_hash)
+
+client = create_telegram_client()
 
 # Статусы для отслеживания шагов
 users_status = {}
@@ -128,5 +133,15 @@ def send_email(file_path, sender_id):
     server.sendmail(from_addr, to_addr, text)
     server.quit()
 
-client.start()
-client.run_until_disconnected()
+def run_bot():
+    while True:
+        try:
+            client.start(bot_token=bot_token)
+            client.run_until_disconnected()
+        except FloodWaitError as e:
+            wait_time = e.seconds
+            logging.warning(f"FloodWaitError: Waiting for {wait_time} seconds before retrying...")
+            time.sleep(wait_time)
+
+if __name__ == '__main__':
+    run_bot()
