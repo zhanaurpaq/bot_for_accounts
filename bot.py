@@ -8,11 +8,15 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import logging
+from dotenv import load_dotenv
 
-api_id = 24776163
-api_hash = 'a8d42769a63635142337f1e7b7202a27'
-bot_token = '7228511139:AAFIiS9spuZElvef1h8DACHLuUK0GEYjFMQ'
-admin_id = 698359191  # ID гендиректора
+# Загружаем переменные окружения из .env файла
+load_dotenv()
+
+api_id = int(os.getenv('API_ID'))
+api_hash = os.getenv('API_HASH')
+bot_token = os.getenv('BOT_TOKEN')
+admin_id = int(os.getenv('ADMIN_ID'))
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -128,6 +132,7 @@ def send_email(file_path, sender_id):
         logging.error("GMAIL_PASSWORD environment variable is not set")
         return
     
+    logging.info(f"GMAIL_PASSWORD is set: {gmail_password is not None}")  # Проверка, что пароль загружен
     server.login(from_addr, gmail_password)
     text = msg.as_string()
     server.sendmail(from_addr, to_addr, text)
