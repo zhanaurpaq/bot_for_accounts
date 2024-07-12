@@ -10,8 +10,8 @@ from email import encoders
 import logging
 
 api_id = int(os.getenv('API_ID'))
-api_hash = os.getenv('API_HASH')
-bot_token = os.getenv('BOT_TOKEN')
+api_hash = os.getenv('API_HASH'))
+bot_token = os.getenv('BOT_TOKEN'))
 admin_id = int(os.getenv('ADMIN_ID'))
 
 # Настройка логирования
@@ -61,8 +61,9 @@ async def handler(event):
             # Получаем имя файла и проверяем его расширение
             file_name = event.message.file.name
             if file_name.endswith(('.pdf', '.xlsx')):
-                file_path = await event.message.download_media()
-                users_data[sender_id]['file_name'] = file_path
+                file_path = await event.message.download_media(file=event.message.file.name)
+                users_data[sender_id]['file_name'] = file_name
+                users_data[sender_id]['file_path'] = file_path
 
                 await client.send_message(
                     admin_id,
@@ -92,7 +93,8 @@ async def callback_handler(event):
         if action == 'approve':
             await event.reply('Счет принят и отправлен в бухгалтерию.')
             file_name = users_data[sender_id]['file_name']
-            send_email(file_name, sender_id)
+            file_path = users_data[sender_id]['file_path']
+            send_email(file_path, file_name, sender_id)
             await client.send_message(sender_id, 'Ваш счет был согласован и отправлен в бухгалтерию.')
 
         elif action == 'reject':
@@ -100,7 +102,7 @@ async def callback_handler(event):
             await client.send_message(sender_id, 'Ваш счет был отклонен.')
         await event.answer()
 
-def send_email(file_path, sender_id):
+def send_email(file_path, file_name, sender_id):
     from_addr = 'mturysbek.00@gmail.com'
     to_addr = 'zhanaurpak2021@gmail.com'
     msg = MIMEMultipart()
@@ -122,7 +124,7 @@ def send_email(file_path, sender_id):
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(file_path)}"')
+        part.add_header('Content-Disposition', f'attachment; filename="{file_name}"')
         msg.attach(part)
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
