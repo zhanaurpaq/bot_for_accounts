@@ -128,7 +128,7 @@ def send_email(file_path, sender_id):
         logging.error("GMAIL_PASSWORD environment variable is not set")
         return
     
-    logging.info(f"GMAIL_PASSWORD is set: {gmail_password is not None}")  # Проверка, что пароль загружен
+    logging.info(f"GMAIL_PASSWORD is set: {gmail_password}")  # Проверка, что пароль загружен
     server.login(from_addr, gmail_password)
     text = msg.as_string()
     server.sendmail(from_addr, to_addr, text)
