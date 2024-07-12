@@ -1,11 +1,7 @@
 import os
-import binascii
 import time
 import smtplib
 import logging
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import padding
 from telethon import TelegramClient, events, Button
 from telethon.errors.rpcerrorlist import FloodWaitError
 from email.mime.multipart import MIMEMultipart
@@ -17,12 +13,6 @@ api_id = int(os.getenv('API_ID'))
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('BOT_TOKEN')
 admin_id = int(os.getenv('ADMIN_ID'))
-encryption_key_hex = os.getenv('ENCRYPTION_KEY')
-
-if not encryption_key_hex:
-    raise ValueError("ENCRYPTION_KEY environment variable is not set")
-
-encryption_key = binascii.unhexlify(encryption_key_hex)  # Преобразуем ключ из шестнадцатеричного формата
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -35,26 +25,6 @@ client = create_telegram_client()
 # Статусы для отслеживания шагов
 users_status = {}
 users_data = {}
-
-def encrypt_file(file_path, key):
-    backend = default_backend()
-    iv = os.urandom(16)
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
-    encryptor = cipher.encryptor()
-
-    with open(file_path, 'rb') as f:
-        data = f.read()
-
-    padder = padding.PKCS7(algorithms.AES.block_size).padder()
-    padded_data = padder.update(data) + padder.finalize()
-
-    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
-
-    encrypted_file_path = file_path + '.enc'
-    with open(encrypted_file_path, 'wb') as f:
-        f.write(iv + encrypted_data)  # Сохраняем IV вместе с зашифрованными данными
-
-    return encrypted_file_path
 
 @client.on(events.NewMessage)
 async def handler(event):
@@ -128,8 +98,7 @@ async def callback_handler(event):
             await event.reply('Счет принят и отправлен в бухгалтерию.')
             file_name = users_data[sender_id]['file_name']
             file_path = users_data[sender_id]['file_path']
-            encrypted_file_path = encrypt_file(file_path, encryption_key)
-            send_email(encrypted_file_path, file_name + '.enc', sender_id)
+            send_email(file_path, file_name, sender_id)
             await client.send_message(sender_id, 'Ваш счет был согласован и отправлен в бухгалтерию.')
 
         elif action == 'reject':
