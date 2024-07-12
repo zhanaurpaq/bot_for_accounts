@@ -5,11 +5,15 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import logging
 
 api_id = 24776163
 api_hash = 'a8d42769a63635142337f1e7b7202a27'
 bot_token = '7228511139:AAFIiS9spuZElvef1h8DACHLuUK0GEYjFMQ'
 admin_id = 698359191  # ID гендиректора
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
 
 client = TelegramClient('bot', api_id, api_hash).start(bot_token=bot_token)
 
@@ -110,7 +114,13 @@ def send_email(file_path, sender_id):
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(from_addr, os.getenv('GMAIL_PASSWORD'))
+    
+    gmail_password = os.getenv('GMAIL_PASSWORD')
+    if not gmail_password:
+        logging.error("GMAIL_PASSWORD environment variable is not set")
+        return
+    
+    server.login(from_addr, gmail_password)
     text = msg.as_string()
     server.sendmail(from_addr, to_addr, text)
     server.quit()
