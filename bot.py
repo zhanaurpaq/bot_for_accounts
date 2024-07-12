@@ -48,7 +48,7 @@ async def handler(event):
         users_status[sender_id] = 'file'
 
     elif status == 'file' and event.message.file:
-        file_name = await event.message.download_media()
+        file_name = await event.message.download_media(file=event.message.file.name)
         users_data[sender_id]['file_name'] = file_name
 
         await client.send_message(
@@ -105,7 +105,7 @@ def send_email(file_path, sender_id):
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename= {os.path.basename(file_path)}')
+        part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(file_path)}')
         msg.attach(part)
 
     server = smtplib.SMTP('smtp.mail.ru', 587)
