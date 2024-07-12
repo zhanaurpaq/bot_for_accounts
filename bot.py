@@ -48,7 +48,7 @@ async def handler(event):
         users_status[sender_id] = 'file'
 
     elif status == 'file' and event.message.file:
-        file_name = await event.message.download_media(file=event.message.file.name)
+        file_name = await event.message.download_media()
         users_data[sender_id]['file_name'] = file_name
 
         await client.send_message(
@@ -84,8 +84,8 @@ async def callback_handler(event):
         await event.answer()
 
 def send_email(file_path, sender_id):
-    from_addr = 'madi.turysbek.00@mail.ru'
-    to_addr = 'mturysbek.00@gmail.com'
+    from_addr = 'mturysbek.00@gmail.com'
+    to_addr = 'zhanaurpak2021@gmail.com'
     msg = MIMEMultipart()
     msg['From'] = from_addr
     msg['To'] = to_addr
@@ -105,12 +105,12 @@ def send_email(file_path, sender_id):
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(file_path)}')
+        part.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(file_path)}"')
         msg.attach(part)
 
-    server = smtplib.SMTP('smtp.mail.ru', 587)
+    server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(from_addr, os.getenv('EMAIL_PASSWORD'))
+    server.login(from_addr, os.getenv('GMAIL_PASSWORD'))
     text = msg.as_string()
     server.sendmail(from_addr, to_addr, text)
     server.quit()
