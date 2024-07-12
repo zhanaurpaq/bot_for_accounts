@@ -53,14 +53,14 @@ async def handler(event):
 
     elif status == 'comments':
         users_data[sender_id]['comments'] = event.raw_text
-        await event.reply('Пожалуйста, загрузите файл счета (только PDF или XLSX):')
+        await event.reply('Пожалуйста, загрузите файл счета (только PDF):')
         users_status[sender_id] = 'file'
 
     elif status == 'file':
         if event.message.file:
             # Получаем имя файла и проверяем его расширение
             file_name = event.message.file.name
-            if file_name.endswith(('.pdf', '.xlsx')):
+            if file_name.endswith('.pdf'):
                 file_path = await event.message.download_media()
                 users_data[sender_id]['file_name'] = file_name
                 users_data[sender_id]['file_path'] = file_path
@@ -77,7 +77,7 @@ async def handler(event):
                 await event.reply('Счет отправлен на согласование.')
                 users_status[sender_id] = 'start'
             else:
-                await event.reply('Пожалуйста, загрузите файл в формате PDF или XLSX.')
+                await event.reply('Пожалуйста, загрузите файл в формате PDF.')
         else:
             await event.reply('Пожалуйста, загрузите файл счета.')
     else:
