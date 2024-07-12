@@ -10,8 +10,8 @@ from email import encoders
 import logging
 
 api_id = int(os.getenv('API_ID'))
-api_hash = os.getenv('API_HASH'))
-bot_token = os.getenv('BOT_TOKEN'))
+api_hash = os.getenv('API_HASH')
+bot_token = os.getenv('BOT_TOKEN')
 admin_id = int(os.getenv('ADMIN_ID'))
 
 # Настройка логирования
