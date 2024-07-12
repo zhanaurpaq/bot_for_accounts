@@ -29,8 +29,9 @@ jobs:
       - name: Run bot
         run: python bot.py
         env:
-          API_ID: 24776163
-          API_HASH: a8d42769a63635142337f1e7b7202a27
-          BOT_TOKEN: 7228511139:AAFIiS9spuZElvef1h8DACHLuUK0GEYjFMQ
-          ADMIN_ID: 698359191
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          API_ID: ${{ secrets.API_ID }}
+          API_HASH: ${{ secrets.API_HASH }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+
