@@ -51,23 +51,26 @@ async def handler(event):
         await event.reply('Пожалуйста, загрузите файл счета:')
         users_status[sender_id] = 'file'
 
-    elif status == 'file' and event.message.file:
-        file_name = await event.message.download_media()
-        users_data[sender_id]['file_name'] = file_name
+    elif status == 'file':
+        if event.message.file:
+            file_name = await event.message.download_media()
+            users_data[sender_id]['file_name'] = file_name
 
-        await client.send_message(
-            admin_id,
-            f'Сотрудник {sender_id} отправил счет на согласование.\nСумма: {users_data[sender_id]["amount"]}\nДата: {users_data[sender_id]["date"]}\nКомментарии: {users_data[sender_id]["comments"]}',
-            buttons=[
-                [Button.inline("Принять", f'approve:{sender_id}'), Button.inline("Отклонить", f'reject:{sender_id}')]
-            ],
-            file=file_name
-        )
+            await client.send_message(
+                admin_id,
+                f'Сотрудник {sender_id} отправил счет на согласование.\nСумма: {users_data[sender_id]["amount"]}\nДата: {users_data[sender_id]["date"]}\nКомментарии: {users_data[sender_id]["comments"]}',
+                buttons=[
+                    [Button.inline("Принять", f'approve:{sender_id}'), Button.inline("Отклонить", f'reject:{sender_id}')]
+                ],
+                file=file_name
+            )
 
-        await event.reply('Счет отправлен на согласование.')
-        users_status[sender_id] = 'start'
+            await event.reply('Счет отправлен на согласование.')
+            users_status[sender_id] = 'start'
+        else:
+            await event.reply('Пожалуйста, загрузите файл счета.')
     else:
-        await event.reply('Пожалуйста, загрузите файл счета.')
+        await event.reply('Пожалуйста, следуйте инструкциям и загрузите файл счета.')
 
 @client.on(events.CallbackQuery)
 async def callback_handler(event):
