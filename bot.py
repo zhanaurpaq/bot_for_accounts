@@ -1,18 +1,22 @@
 import os
 import time
+import smtplib
+import logging
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
 from telethon import TelegramClient, events, Button
 from telethon.errors.rpcerrorlist import FloodWaitError
-import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-import logging
 
 api_id = int(os.getenv('API_ID'))
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('BOT_TOKEN')
 admin_id = int(os.getenv('ADMIN_ID'))
+encryption_key = os.getenv('ENCRYPTION_KEY').encode()  # Используйте безопасный ключ
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +29,26 @@ client = create_telegram_client()
 # Статусы для отслеживания шагов
 users_status = {}
 users_data = {}
+
+def encrypt_file(file_path, key):
+    backend = default_backend()
+    iv = os.urandom(16)
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+    encryptor = cipher.encryptor()
+
+    with open(file_path, 'rb') as f:
+        data = f.read()
+
+    padder = padding.PKCS7(algorithms.AES.block_size).padder()
+    padded_data = padder.update(data) + padder.finalize()
+
+    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+
+    encrypted_file_path = file_path + '.enc'
+    with open(encrypted_file_path, 'wb') as f:
+        f.write(iv + encrypted_data)  # Сохраняем IV вместе с зашифрованными данными
+
+    return encrypted_file_path
 
 @client.on(events.NewMessage)
 async def handler(event):
@@ -65,6 +89,8 @@ async def handler(event):
                 users_data[sender_id]['file_name'] = file_name
                 users_data[sender_id]['file_path'] = file_path
 
+                logging.info(f"File {file_name} received from user {sender_id}")
+
                 await client.send_message(
                     admin_id,
                     f'Сотрудник {sender_id} отправил счет на согласование.\nСумма: {users_data[sender_id]["amount"]}\nДата: {users_data[sender_id]["date"]}\nКомментарии: {users_data[sender_id]["comments"]}',
@@ -78,8 +104,10 @@ async def handler(event):
                 users_status[sender_id] = 'start'
             else:
                 await event.reply('Пожалуйста, загрузите файл в формате PDF.')
+                logging.warning(f"User {sender_id} tried to upload a non-PDF file: {file_name}")
         else:
             await event.reply('Пожалуйста, загрузите файл счета.')
+            logging.warning(f"User {sender_id} did not upload a file.")
     else:
         await event.reply('Пожалуйста, следуйте инструкциям и загрузите файл счета.')
 
@@ -94,7 +122,8 @@ async def callback_handler(event):
             await event.reply('Счет принят и отправлен в бухгалтерию.')
             file_name = users_data[sender_id]['file_name']
             file_path = users_data[sender_id]['file_path']
-            send_email(file_path, file_name, sender_id)
+            encrypted_file_path = encrypt_file(file_path, encryption_key)
+            send_email(encrypted_file_path, file_name + '.enc', sender_id)
             await client.send_message(sender_id, 'Ваш счет был согласован и отправлен в бухгалтерию.')
 
         elif action == 'reject':
