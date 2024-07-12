@@ -55,7 +55,7 @@ async def handler(event):
             admin_id,
             f'Сотрудник {sender_id} отправил счет на согласование.\nСумма: {users_data[sender_id]["amount"]}\nДата: {users_data[sender_id]["date"]}\nКомментарии: {users_data[sender_id]["comments"]}',
             buttons=[
-                [Button.inline("Принять", b'approve'), Button.inline("Отклонить", b'reject')]
+                [Button.inline("Принять", f'approve:{sender_id}'), Button.inline("Отклонить", f'reject:{sender_id}')]
             ],
             file=file_name
         )
@@ -68,18 +68,20 @@ async def handler(event):
 @client.on(events.CallbackQuery)
 async def callback_handler(event):
     if event.query.user_id == admin_id:
-        data = event.data.decode('utf-8')
+        data = event.data.decode('utf-8').split(':')
+        action = data[0]
+        sender_id = int(data[1])
 
-        if data == 'approve':
+        if action == 'approve':
             await event.reply('Счет принят и отправлен в бухгалтерию.')
-            file_name = users_data[event.query.user_id]['file_name']
-            send_email(file_name)
+            file_name = users_data[sender_id]['file_name']
+            send_email(file_name, sender_id)
 
-        elif data == 'reject':
+        elif action == 'reject':
             await event.reply('Счет отклонен.')
         await event.answer()
 
-def send_email(file_path):
+def send_email(file_path, sender_id):
     from_addr = 'madi.turysbek.00@mail.ru'
     to_addr = 'mturysbek.00@gmail.com'
     msg = MIMEMultipart()
@@ -87,7 +89,7 @@ def send_email(file_path):
     msg['To'] = to_addr
     msg['Subject'] = 'Счет на оплату'
 
-    body = 'Вложение содержит новый счет на оплату.'
+    body = f'Вложение содержит новый счет на оплату от сотрудника {sender_id}.'
     msg.attach(MIMEText(body, 'plain'))
 
     attachment = open(file_path, 'rb')
