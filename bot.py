@@ -1,4 +1,5 @@
 import os
+import binascii
 import time
 import smtplib
 import logging
@@ -16,7 +17,12 @@ api_id = int(os.getenv('API_ID'))
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('BOT_TOKEN')
 admin_id = int(os.getenv('ADMIN_ID'))
-encryption_key = os.getenv('ENCRYPTION_KEY').encode()  # Используйте безопасный ключ
+encryption_key_hex = os.getenv('ENCRYPTION_KEY')
+
+if not encryption_key_hex:
+    raise ValueError("ENCRYPTION_KEY environment variable is not set")
+
+encryption_key = binascii.unhexlify(encryption_key_hex)  # Преобразуем ключ из шестнадцатеричного формата
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
