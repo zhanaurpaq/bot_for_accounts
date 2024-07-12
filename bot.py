@@ -61,7 +61,7 @@ async def handler(event):
             # Получаем имя файла и проверяем его расширение
             file_name = event.message.file.name
             if file_name.endswith(('.pdf', '.xlsx')):
-                file_path = await event.message.download_media(file=event.message.file.name)
+                file_path = await event.message.download_media()
                 users_data[sender_id]['file_name'] = file_name
                 users_data[sender_id]['file_path'] = file_path
 
