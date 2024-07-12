@@ -76,9 +76,11 @@ async def callback_handler(event):
             await event.reply('Счет принят и отправлен в бухгалтерию.')
             file_name = users_data[sender_id]['file_name']
             send_email(file_name, sender_id)
+            await client.send_message(sender_id, 'Ваш счет был согласован и отправлен в бухгалтерию.')
 
         elif action == 'reject':
             await event.reply('Счет отклонен.')
+            await client.send_message(sender_id, 'Ваш счет был отклонен.')
         await event.answer()
 
 def send_email(file_path, sender_id):
@@ -89,16 +91,23 @@ def send_email(file_path, sender_id):
     msg['To'] = to_addr
     msg['Subject'] = 'Счет на оплату'
 
-    body = f'Вложение содержит новый счет на оплату от сотрудника {sender_id}.'
+    # Получение данных пользователя
+    amount = users_data[sender_id]['amount']
+    date = users_data[sender_id]['date']
+    comments = users_data[sender_id]['comments']
+
+    # Тело письма
+    body = f'Вложение содержит новый счет на оплату от сотрудника {sender_id}.\n\nСумма: {amount}\nДата: {date}\nКомментарии: {comments}'
     msg.attach(MIMEText(body, 'plain'))
 
-    attachment = open(file_path, 'rb')
-    part = MIMEBase('application', 'octet-stream')
-    part.set_payload((attachment).read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition', f'attachment; filename= {os.path.basename(file_path)}')
+    # Присоединение файла
+    with open(file_path, 'rb') as attachment:
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f'attachment; filename= {os.path.basename(file_path)}')
+        msg.attach(part)
 
-    msg.attach(part)
     server = smtplib.SMTP('smtp.mail.ru', 587)
     server.starttls()
     server.login(from_addr, os.getenv('EMAIL_PASSWORD'))
