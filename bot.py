@@ -132,7 +132,7 @@ async def send_email(file_path, file_name, sender_id):
         msg.attach(part)
 
     message = msg.as_string()
-    
+
     # Параметры SMTP-сервера
     smtp_host = 'smtp.gmail.com'
     smtp_port = 587
@@ -145,6 +145,8 @@ async def send_email(file_path, file_name, sender_id):
 
     await aiosmtplib.send(
         message,
+        recipients=[to_addr],
+        sender=from_addr,
         hostname=smtp_host,
         port=smtp_port,
         start_tls=True,
