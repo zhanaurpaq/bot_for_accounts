@@ -8,11 +8,29 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import aiosmtplib
 
-api_id = int(os.getenv('API_ID'))
+# Чтение переменных окружения и логирование
+api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('BOT_TOKEN')
-admin_id = int(os.getenv('ADMIN_ID'))
-accountant_id = int(os.getenv('ACCOUNTANT_ID'))
+admin_id = os.getenv('ADMIN_ID')
+accountant_id = os.getenv('ACCOUNTANT_ID')
+gmail_password = os.getenv('GMAIL_PASSWORD')
+
+logging.info(f"API_ID: {api_id}")
+logging.info(f"API_HASH: {api_hash}")
+logging.info(f"BOT_TOKEN: {bot_token}")
+logging.info(f"ADMIN_ID: {admin_id}")
+logging.info(f"ACCOUNTANT_ID: {accountant_id}")
+logging.info(f"GMAIL_PASSWORD: {'set' if gmail_password else 'not set'}")
+
+# Проверка наличия всех переменных окружения
+if not all([api_id, api_hash, bot_token, admin_id, accountant_id, gmail_password]):
+    raise ValueError("One or more environment variables are not set.")
+
+# Преобразование переменных к нужному типу
+api_id = int(api_id)
+admin_id = int(admin_id)
+accountant_id = int(accountant_id)
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -125,7 +143,7 @@ async def callback_handler(event):
         await client.send_message(sender_id, 'Ваш счет был одобрен гендиректором и отправлен на согласование бухгалтеру.')
         await event.answer()
 
-    elif action == 'reject_gen' and event.query.user_id == admin_id:
+    elif action == 'reject_gen' и event.query.user_id == admin_id:
         await event.respond('Счет отклонен гендиректором.')
         await client.send_message(sender_id, 'Ваш счет был отклонен гендиректором.')
         await event.answer()
@@ -149,51 +167,3 @@ async def send_email(file_path, file_name, sender_id):
     msg = MIMEMultipart()
     msg['From'] = from_addr
     msg['To'] = to_addr
-    msg['Subject'] = 'Счет на оплату'
-
-    amount = users_data[sender_id]['amount']
-    date = users_data[sender_id]['date']
-    comments = users_data[sender_id]['comments']
-
-    body = f'Вложение содержит новый счет на оплату от сотрудника {sender_id}.\n\nСумма: {amount}\nДата: {date}\nКомментарии: {comments}'
-    msg.attach(MIMEText(f"<html><body>{body}</body></html>", "html", "utf-8"))
-
-    with open(file_path, 'rb') as attachment:
-        part = MIMEApplication(attachment.read(), Name=file_name)
-        part['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        msg.attach(part)
-
-    message = msg.as_string()
-
-    smtp_host = 'smtp.gmail.com'
-    smtp_port = 587
-    smtp_user = from_addr
-    smtp_password = os.getenv('GMAIL_PASSWORD')
-
-    if not smtp_password:
-        logging.error("GMAIL_PASSWORD environment variable is not set")
-        return
-
-    await aiosmtplib.send(
-        message,
-        recipients=[to_addr],
-        sender=from_addr,
-        hostname=smtp_host,
-        port=smtp_port,
-        start_tls=True,
-        username=smtp_user,
-        password=smtp_password
-    )
-
-def run_bot():
-    while True:
-        try:
-            client.start(bot_token=bot_token)
-            client.run_until_disconnected()
-        except FloodWaitError as e:
-            wait_time = e.seconds
-            logging.warning(f"FloodWaitError: Waiting for {wait_time} seconds before retrying...")
-            time.sleep(wait_time)
-
-if __name__ == '__main__':
-    run_bot()
