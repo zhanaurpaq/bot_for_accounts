@@ -1,6 +1,5 @@
 import os
 import time
-import smtplib
 import logging
 from telethon import TelegramClient, events, Button
 from telethon.errors.rpcerrorlist import FloodWaitError
@@ -8,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import aiosmtplib
 
 api_id = int(os.getenv('API_ID'))
 api_hash = os.getenv('API_HASH')
@@ -98,7 +98,7 @@ async def callback_handler(event):
             await event.reply('Счет принят и отправлен в бухгалтерию.')
             file_name = users_data[sender_id]['file_name']
             file_path = users_data[sender_id]['file_path']
-            send_email(file_path, file_name, sender_id)
+            await send_email(file_path, file_name, sender_id)
             await client.send_message(sender_id, 'Ваш счет был согласован и отправлен в бухгалтерию.')
 
         elif action == 'reject':
@@ -106,7 +106,7 @@ async def callback_handler(event):
             await client.send_message(sender_id, 'Ваш счет был отклонен.')
         await event.answer()
 
-def send_email(file_path, file_name, sender_id):
+async def send_email(file_path, file_name, sender_id):
     from_addr = 'mturysbek.00@gmail.com'
     to_addr = 'zhanaurpak2021@gmail.com'
     msg = MIMEMultipart()
@@ -131,19 +131,26 @@ def send_email(file_path, file_name, sender_id):
         part.add_header('Content-Disposition', f'attachment; filename="{file_name}"')
         msg.attach(part)
 
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
+    message = msg.as_string()
     
-    gmail_password = os.getenv('GMAIL_PASSWORD')
-    if not gmail_password:
+    # Параметры SMTP-сервера
+    smtp_host = 'smtp.gmail.com'
+    smtp_port = 587
+    smtp_user = from_addr
+    smtp_password = os.getenv('GMAIL_PASSWORD')
+
+    if not smtp_password:
         logging.error("GMAIL_PASSWORD environment variable is not set")
         return
-    
-    logging.info(f"GMAIL_PASSWORD is set: {gmail_password}")  # Проверка, что пароль загружен
-    server.login(from_addr, gmail_password)
-    text = msg.as_string()
-    server.sendmail(from_addr, to_addr, text)
-    server.quit()
+
+    await aiosmtplib.send(
+        message,
+        hostname=smtp_host,
+        port=smtp_port,
+        start_tls=True,
+        username=smtp_user,
+        password=smtp_password
+    )
 
 def run_bot():
     while True:
