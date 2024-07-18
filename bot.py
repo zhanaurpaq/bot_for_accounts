@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 import aiosmtplib
 
 api_id = int(os.getenv('API_ID'))
-api_hash = os.getenv('API_HASH'))
+api_hash = os.getenv('API_HASH')
 bot_token = os.getenv('BOT_TOKEN')
 admin_id = int(os.getenv('ADMIN_ID'))
 
