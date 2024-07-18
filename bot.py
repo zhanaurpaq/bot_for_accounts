@@ -123,8 +123,8 @@ async def send_email(file_path, file_name, sender_id):
     # Присоединение файла
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://api.telegram.org/file/bot{bot_token}/{file_path}") as response:
-            buffer = io.BytesIO(await response.read())
-            part = MIMEApplication(buffer.read(), Name=file_name)
+            file_data = await response.read()
+            part = MIMEApplication(file_data, Name=file_name)
             part['Content-Disposition'] = f'attachment; filename="{file_name}"'
             msg.attach(part)
 
