@@ -23,6 +23,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Copy credentials
+      run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > credentials.json
+
     - name: Run bot
       env:
         API_ID: ${{ secrets.API_ID }}
@@ -31,4 +34,5 @@ jobs:
         ADMIN_ID: ${{ secrets.ADMIN_ID }}
         ACCOUNTANT_ID: ${{ secrets.ACCOUNTANT_ID }}
         GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+        GOOGLE_SHEET_NAME: ${{ secrets.GOOGLE_SHEET_NAME }}
       run: python bot.py
