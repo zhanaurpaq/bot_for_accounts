@@ -23,8 +23,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Copy credentials
-      run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > credentials.json
+    - name: Create credentials file
+      run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > credentials.json
 
     - name: Run bot
       env:
