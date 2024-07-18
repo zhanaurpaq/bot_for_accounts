@@ -1,8 +1,6 @@
 import os
 import time
 import logging
-import aiohttp
-import io
 from email.mime.application import MIMEApplication
 from telethon import TelegramClient, events, Button
 from telethon.errors.rpcerrorlist import FloodWaitError
@@ -121,12 +119,10 @@ async def send_email(file_path, file_name, sender_id):
     msg.attach(MIMEText(f"<html><body>{body}</body></html>", "html", "utf-8"))
 
     # Присоединение файла
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://api.telegram.org/file/bot{bot_token}/{file_path}") as response:
-            file_data = await response.read()
-            part = MIMEApplication(file_data, Name=file_name)
-            part['Content-Disposition'] = f'attachment; filename="{file_name}"'
-            msg.attach(part)
+    with open(file_path, 'rb') as attachment:
+        part = MIMEApplication(attachment.read(), Name=file_name)
+        part['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        msg.attach(part)
 
     message = msg.as_string()
 
