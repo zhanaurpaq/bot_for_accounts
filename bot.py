@@ -1,6 +1,9 @@
 import os
 import time
 import logging
+import aiohttp
+import io
+from email.mime.application import MIMEApplication
 from telethon import TelegramClient, events, Button
 from telethon.errors.rpcerrorlist import FloodWaitError
 from email.mime.multipart import MIMEMultipart
@@ -121,15 +124,15 @@ async def send_email(file_path, file_name, sender_id):
 
     # Тело письма
     body = f'Вложение содержит новый счет на оплату от сотрудника {sender_id}.\n\nСумма: {amount}\nДата: {date}\nКомментарии: {comments}'
-    msg.attach(MIMEText(body, 'plain'))
+    msg.attach(MIMEText(f"<html><body>{body}</body></html>", "html", "utf-8"))
 
     # Присоединение файла
-    with open(file_path, 'rb') as attachment:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(attachment.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename="{file_name}"')
-        msg.attach(part)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"http://api.telegram.org/file/bot{bot_token}/{file_path}") as response:
+            buffer = io.BytesIO(await response.read())
+            part = MIMEApplication(buffer.read(), Name=file_name)
+            part['Content-Disposition'] = f'attachment; filename="{file_name}"'
+            msg.attach(part)
 
     message = msg.as_string()
 
