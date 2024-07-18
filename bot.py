@@ -8,12 +8,10 @@ from telethon import TelegramClient, events, Button
 from telethon.errors.rpcerrorlist import FloodWaitError
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
 import aiosmtplib
 
 api_id = int(os.getenv('API_ID'))
-api_hash = os.getenv('API_HASH')
+api_hash = os.getenv('API_HASH'))
 bot_token = os.getenv('BOT_TOKEN')
 admin_id = int(os.getenv('ADMIN_ID'))
 
@@ -128,7 +126,7 @@ async def send_email(file_path, file_name, sender_id):
 
     # Присоединение файла
     async with aiohttp.ClientSession() as session:
-        async with session.get(f"http://api.telegram.org/file/bot{bot_token}/{file_path}") as response:
+        async with session.get(f"https://api.telegram.org/file/bot{bot_token}/{file_path}") as response:
             buffer = io.BytesIO(await response.read())
             part = MIMEApplication(buffer.read(), Name=file_name)
             part['Content-Disposition'] = f'attachment; filename="{file_name}"'
