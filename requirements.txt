@@ -1,4 +1,5 @@
 telethon
 python-dotenv
 aiosmtplib
-aiohttp
+gspread
+oauth2client
