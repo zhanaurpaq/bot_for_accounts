@@ -1,6 +1,8 @@
 import os
 import time
 import logging
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from email.mime.application import MIMEApplication
 from telethon import TelegramClient, events, Button
 from telethon.errors.rpcerrorlist import FloodWaitError
@@ -15,6 +17,7 @@ bot_token = os.getenv('BOT_TOKEN')
 admin_id = os.getenv('ADMIN_ID')
 accountant_id = os.getenv('ACCOUNTANT_ID')
 gmail_password = os.getenv('GMAIL_PASSWORD')
+google_sheet_name = os.getenv('GOOGLE_SHEET_NAME')
 
 logging.info(f"API_ID: {api_id}")
 logging.info(f"API_HASH: {api_hash}")
@@ -22,9 +25,10 @@ logging.info(f"BOT_TOKEN: {bot_token}")
 logging.info(f"ADMIN_ID: {admin_id}")
 logging.info(f"ACCOUNTANT_ID: {accountant_id}")
 logging.info(f"GMAIL_PASSWORD: {'set' if gmail_password else 'not set'}")
+logging.info(f"GOOGLE_SHEET_NAME: {google_sheet_name}")
 
 # Проверка наличия всех переменных окружения
-if not all([api_id, api_hash, bot_token, admin_id, accountant_id, gmail_password]):
+if not all([api_id, api_hash, bot_token, admin_id, accountant_id, gmail_password, google_sheet_name]):
     raise ValueError("One or more environment variables are not set.")
 
 # Преобразование переменных к нужному типу
@@ -39,6 +43,17 @@ def create_telegram_client():
     return TelegramClient('bot', api_id, api_hash)
 
 client = create_telegram_client()
+
+# Настройка Google Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+client_gspread = gspread.authorize(creds)
+sheet = client_gspread.open(google_sheet_name).sheet1
+
+# Функция для добавления данных в Google Sheets
+def add_to_google_sheet(amount, date, comments):
+    row = [amount, date, comments]
+    sheet.append_row(row)
 
 # Статусы для отслеживания шагов
 users_status = {}
@@ -154,6 +169,7 @@ async def callback_handler(event):
         file_path = users_data[sender_id]['file_path']
         await send_email(file_path, file_name, sender_id)
         await client.send_message(sender_id, 'Ваш счет был одобрен бухгалтером и отправлен в бухгалтерию.')
+        add_to_google_sheet(users_data[sender_id]['amount'], users_data[sender_id]['date'], users_data[sender_id]['comments'])
         await event.answer()
 
     elif action == 'reject_acc' and event.query.user_id == accountant_id:
@@ -186,7 +202,7 @@ async def send_email(file_path, file_name, sender_id):
     smtp_host = 'smtp.gmail.com'
     smtp_port = 587
     smtp_user = from_addr
-    smtp_password = os.getenv('GMAIL_PASSWORD')
+    smtp_password = gmail_password
 
     if not smtp_password:
         logging.error("GMAIL_PASSWORD environment variable is not set")
